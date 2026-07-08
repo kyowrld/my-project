@@ -1,6 +1,6 @@
 {
   "app": {
-    "title": "PURPLE // LOADER",
+    "title": "Packet.Online",
     "subtitle": "secure authentication",
     "demo_mode": true
   },
@@ -17,7 +17,7 @@
     "status_table": "app_status"
   },
   "launcher": {
-    "command": "",
-    "label": "RUN LAUNCHER"
+    "command": "./test_launcher",
+    "label": "Run Launcher"
   }
 }

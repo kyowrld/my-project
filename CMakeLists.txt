@@ -95,6 +95,11 @@ if(WIN32)
   target_link_libraries(purple_loader PRIVATE advapi32 ws2_32)
 endif()
 
+# ---- Test launcher -----------------------------------------------------------
+# A tiny stand-in executable to test the "Run Launcher" button end-to-end.
+# Built next to purple_loader as test_launcher(.exe).
+add_executable(test_launcher tools/test_launcher.cpp)
+
 # Copy the example config next to the binary if the user has no config yet.
 add_custom_command(TARGET purple_loader POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy_if_different

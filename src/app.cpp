@@ -558,13 +558,18 @@ void App::renderDashboard(const ImVec2& size) {
     auto infoBox = [&](const char* label, const std::string& value, const ImVec4& valueColor,
                        bool mono) {
         caption(label);
+        const float boxH = 44.0f;
         ImGui::PushStyleColor(ImGuiCol_ChildBg, theme::color::kInputBg);
         ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 8.0f);
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(12, 10));
-        ImGui::BeginChild(label, ImVec2(leftW, 42), true);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(12, 0));
+        ImGui::BeginChild(label, ImVec2(leftW, boxH), true);
         if (mono) ui::pushFont(ui::fontRegular);
+        const char* text = value.empty() ? "-" : value.c_str();
+        // Center the value both ways inside the box.
+        const ImVec2 ts = ImGui::CalcTextSize(text);
+        ImGui::SetCursorPos(ImVec2((leftW - ts.x) * 0.5f, (boxH - ts.y) * 0.5f));
         ImGui::PushStyleColor(ImGuiCol_Text, valueColor);
-        ImGui::TextUnformatted(value.empty() ? "-" : value.c_str());
+        ImGui::TextUnformatted(text);
         ImGui::PopStyleColor();
         if (mono && ui::fontRegular) ImGui::PopFont();
         ImGui::EndChild();
@@ -599,23 +604,25 @@ void App::renderDashboard(const ImVec2& size) {
     ImGui::EndGroup();
 
     // ---- Right column: console panel + run launcher ------------------------
-    ImGui::SetCursorPos(ImVec2(pad + leftW + 24.0f, bodyTop));
-    ImGui::BeginGroup();
-
+    // Absolute layout so the launcher button always sits inside the window.
+    const float rightX = pad + leftW + 24.0f;
     const float buttonH = 50.0f;
-    const float refreshH = 34.0f;
-    renderConsole(rightW, bodyH - buttonH - refreshH - 16.0f);
+    const float refreshBox = 30.0f;
+    const float gap = 10.0f;
+    const float consoleH = bodyH - buttonH - refreshBox - gap * 2.0f;
+
+    ImGui::SetCursorPos(ImVec2(rightX, bodyTop));
+    renderConsole(rightW, consoleH);
 
     // Refresh icon row (clears the console).
-    ImGui::Dummy(ImVec2(0, 4));
     {
-        const float iconBox = refreshH;
-        ImGui::SetCursorPosX(pad + leftW + 24.0f + rightW - iconBox);
+        const float rowY = bodyTop + consoleH + gap;
+        ImGui::SetCursorPos(ImVec2(rightX + rightW - refreshBox, rowY));
         const ImVec2 p = ImGui::GetCursorScreenPos();
-        ImGui::InvisibleButton("##refresh", ImVec2(iconBox, iconBox));
+        ImGui::InvisibleButton("##refresh", ImVec2(refreshBox, refreshBox));
         const bool hov = ImGui::IsItemHovered();
         drawRefreshIcon(ImGui::GetWindowDrawList(),
-                        ImVec2(p.x + iconBox * 0.5f, p.y + iconBox * 0.5f), 9.0f,
+                        ImVec2(p.x + refreshBox * 0.5f, p.y + refreshBox * 0.5f), 9.0f,
                         ImGui::GetColorU32(hov ? theme::color::kAccentBright
                                                : theme::color::kTextDim));
         if (ImGui::IsItemClicked()) {
@@ -627,7 +634,7 @@ void App::renderDashboard(const ImVec2& size) {
         }
     }
 
-    ImGui::Dummy(ImVec2(0, 4));
+    ImGui::SetCursorPos(ImVec2(rightX, bodyTop + bodyH - buttonH));
     const bool launching = launcherRunning_;
     if (launching) ImGui::BeginDisabled();
     ui::pushFont(ui::fontMedium);
@@ -642,6 +649,4 @@ void App::renderDashboard(const ImVec2& size) {
     ImGui::PopStyleColor(2);
     if (ui::fontMedium) ImGui::PopFont();
     if (launching) ImGui::EndDisabled();
-
-    ImGui::EndGroup();
 }
