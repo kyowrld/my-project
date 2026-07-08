@@ -1,0 +1,10 @@
+{
+  "name": "purple-loader",
+  "version": "1.0.0",
+  "description": "Purple/black C++ ImGui login UI with KeyAuth + Supabase",
+  "dependencies": [
+    "glfw3",
+    "curl",
+    "libsodium"
+  ]
+}

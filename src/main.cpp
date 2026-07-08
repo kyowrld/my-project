@@ -101,7 +101,7 @@ int main(int argc, char** argv) {
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
 
-    GLFWwindow* window = glfwCreateWindow(980, 640, config.title.c_str(), nullptr, nullptr);
+    GLFWwindow* window = glfwCreateWindow(1120, 720, config.title.c_str(), nullptr, nullptr);
     if (!window) {
         std::fprintf(stderr, "Failed to create window\n");
         glfwTerminate();

@@ -239,7 +239,7 @@ void App::render() {
 
 void App::renderLogin(const ImVec2& size) {
     const float cardW = 400.0f;
-    const float cardH = 470.0f;
+    const float cardH = authMode_ == AuthMode::Account ? 578.0f : 498.0f;
     ImGui::SetCursorPos(ImVec2((size.x - cardW) * 0.5f, (size.y - cardH) * 0.5f));
 
     ImGui::PushStyleColor(ImGuiCol_ChildBg, theme::color::kPanel);
@@ -322,8 +322,8 @@ void App::renderLogin(const ImVec2& size) {
     }
 
     // Footer.
+    ImGui::Dummy(ImVec2(0, 12));
     const bool demo = config_.demoMode || !config_.keyauth.configured();
-    ImGui::SetCursorPosY(cardH - 34.0f);
     ImGui::PushStyleColor(ImGuiCol_Text, demo ? theme::color::kAccent : theme::color::kSuccess);
     ImGui::TextUnformatted(demo ? "DEMO MODE - any credentials accepted"
                                 : "secured by KeyAuth + Ed25519");

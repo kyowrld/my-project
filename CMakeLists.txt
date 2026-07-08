@@ -10,17 +10,27 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 # ---- Dependencies ------------------------------------------------------------
+# Works with system packages (apt/brew) and with vcpkg on Windows.
 find_package(CURL REQUIRED)
 find_package(OpenGL REQUIRED)
 
-find_package(glfw3 QUIET)
+# GLFW: prefer the CMake config package (vcpkg / find_package), fall back to
+# pkg-config on Linux/macOS.
+find_package(glfw3 CONFIG QUIET)
+if(NOT glfw3_FOUND)
+  find_package(glfw3 QUIET)
+endif()
 if(NOT glfw3_FOUND)
   find_package(PkgConfig REQUIRED)
   pkg_check_modules(GLFW REQUIRED glfw3)
 endif()
 
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(SODIUM REQUIRED libsodium)
+# libsodium: vcpkg ships "unofficial-sodium", system packages ship pkg-config.
+find_package(unofficial-sodium CONFIG QUIET)
+if(NOT unofficial-sodium_FOUND)
+  find_package(PkgConfig REQUIRED)
+  pkg_check_modules(SODIUM REQUIRED libsodium)
+endif()
 
 # ---- Dear ImGui (vendored) ---------------------------------------------------
 set(IMGUI_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external/imgui)
@@ -54,15 +64,21 @@ add_executable(purple_loader
 
 target_include_directories(purple_loader PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/external
-  ${SODIUM_INCLUDE_DIRS}
 )
 
 target_link_libraries(purple_loader PRIVATE
   imgui
   CURL::libcurl
   OpenGL::GL
-  ${SODIUM_LIBRARIES}
 )
+
+# libsodium link (config package vs pkg-config).
+if(unofficial-sodium_FOUND)
+  target_link_libraries(purple_loader PRIVATE unofficial-sodium::sodium)
+else()
+  target_include_directories(purple_loader PRIVATE ${SODIUM_INCLUDE_DIRS})
+  target_link_libraries(purple_loader PRIVATE ${SODIUM_LIBRARIES})
+endif()
 
 if(glfw3_FOUND)
   target_link_libraries(purple_loader PRIVATE glfw)
@@ -72,6 +88,11 @@ endif()
 
 if(UNIX AND NOT APPLE)
   target_link_libraries(purple_loader PRIVATE dl pthread)
+endif()
+
+if(WIN32)
+  # Registry (HWID) + sockets used transitively by curl.
+  target_link_libraries(purple_loader PRIVATE advapi32 ws2_32)
 endif()
 
 # Copy the example config next to the binary if the user has no config yet.
