@@ -2,6 +2,7 @@
 
 #include <array>
 #include <chrono>
+#include <cmath>
 #include <cstdint>
 #include <cstdio>
 #include <ctime>
@@ -291,17 +292,21 @@ void App::handleWindowDrag(const ImVec2& size) {
                            mouse.x <= wp.x + size.x - 70.0f;  // leave the lights alone
     if (overTitle && !ImGui::IsAnyItemHovered() && !ImGui::IsAnyItemActive() &&
         ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
+        // Record where inside the window we grabbed, so that point stays glued
+        // to the cursor (window-relative offset is constant -> no jitter).
+        glfwGetCursorPos(window_, &dragCursorX_, &dragCursorY_);
         dragging_ = true;
     }
     if (!ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
         dragging_ = false;
     }
     if (dragging_) {
-        const ImVec2 delta = ImGui::GetIO().MouseDelta;
+        double cx = 0.0, cy = 0.0;
+        glfwGetCursorPos(window_, &cx, &cy);
         int wx = 0, wy = 0;
         glfwGetWindowPos(window_, &wx, &wy);
-        glfwSetWindowPos(window_, wx + static_cast<int>(delta.x),
-                         wy + static_cast<int>(delta.y));
+        glfwSetWindowPos(window_, wx + static_cast<int>(cx - dragCursorX_),
+                         wy + static_cast<int>(cy - dragCursorY_));
     }
 }
 
@@ -355,14 +360,35 @@ void App::renderChrome(const ImVec2& size) {
 
 void App::applyWindowForScreen(Screen s) {
     if (!window_ || fullscreen_) return;
-    const int w = s == Screen::Login ? 440 : 1080;
-    const int h = s == Screen::Login ? 496 : 680;
+    // Set the animation target; the actual resize is eased per-frame in render().
+    targetW_ = s == Screen::Login ? 440.0f : 1080.0f;
+    targetH_ = s == Screen::Login ? 496.0f : 680.0f;
     int wx = 0, wy = 0, ww = 0, wh = 0;
     glfwGetWindowPos(window_, &wx, &wy);
     glfwGetWindowSize(window_, &ww, &wh);
-    const int cx = wx + ww / 2, cy = wy + wh / 2;
+    winW_ = static_cast<float>(ww);
+    winH_ = static_cast<float>(wh);
+    anchorCX_ = wx + ww * 0.5f;  // grow/shrink from the current center
+    anchorCY_ = wy + wh * 0.5f;
+    resizing_ = true;
+}
+
+void App::stepWindowResize() {
+    if (!resizing_ || !window_ || fullscreen_) return;
+    const float dt = ImGui::GetIO().DeltaTime;
+    const float t = 1.0f - std::exp(-16.0f * dt);  // frame-rate independent ease
+    winW_ += (targetW_ - winW_) * t;
+    winH_ += (targetH_ - winH_) * t;
+    if (std::fabs(winW_ - targetW_) < 0.5f && std::fabs(winH_ - targetH_) < 0.5f) {
+        winW_ = targetW_;
+        winH_ = targetH_;
+        resizing_ = false;
+    }
+    const int w = static_cast<int>(winW_ + 0.5f);
+    const int h = static_cast<int>(winH_ + 0.5f);
     glfwSetWindowSize(window_, w, h);
-    glfwSetWindowPos(window_, cx - w / 2, cy - h / 2);
+    glfwSetWindowPos(window_, static_cast<int>(anchorCX_ - w * 0.5f),
+                     static_cast<int>(anchorCY_ - h * 0.5f));
 }
 
 void App::render() {
@@ -372,7 +398,12 @@ void App::render() {
     if (appliedScreen_ != screen_) {
         applyWindowForScreen(screen_);
         appliedScreen_ = screen_;
+        screenAlpha_ = 0.0f;  // restart fade-in for the new screen
     }
+    stepWindowResize();
+    // Ease the content fade-in.
+    screenAlpha_ += (1.0f - screenAlpha_) * (1.0f - std::exp(-14.0f * ImGui::GetIO().DeltaTime));
+    if (screenAlpha_ > 0.999f) screenAlpha_ = 1.0f;
 
     const ImGuiViewport* viewport = ImGui::GetMainViewport();
     ImGui::SetNextWindowPos(viewport->Pos);
@@ -391,11 +422,14 @@ void App::render() {
     const ImVec2 size = viewport->Size;
     renderChrome(size);
 
+    // Fade the screen content in on each transition.
+    ImGui::PushStyleVar(ImGuiStyleVar_Alpha, screenAlpha_);
     if (screen_ == Screen::Login) {
         renderLogin(size);
     } else {
         renderDashboard(size);
     }
+    ImGui::PopStyleVar();
 
     ImGui::End();
     ImGui::PopStyleColor();

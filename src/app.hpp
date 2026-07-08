@@ -54,6 +54,8 @@ private:
     // Resizes the OS window to fit the active screen (compact login box vs.
     // larger dashboard), keeping it centered on its current position.
     void applyWindowForScreen(Screen s);
+    // Eases the OS window toward the target size each frame (resize animation).
+    void stepWindowResize();
 
     // Custom window chrome (borderless): rounded background, drag-to-move, and
     // the red/orange/green traffic lights. Returns the content inset region.
@@ -81,6 +83,14 @@ private:
     // Fullscreen toggle (green light) restores to this windowed geometry.
     bool fullscreen_ = false;
     int savedX_ = 0, savedY_ = 0, savedW_ = 0, savedH_ = 0;
+
+    // Smooth window-resize animation between screens (login <-> dashboard).
+    float winW_ = 440.0f, winH_ = 496.0f;   // current animated size
+    float targetW_ = 440.0f, targetH_ = 496.0f;
+    float anchorCX_ = 0.0f, anchorCY_ = 0.0f;  // screen-space center to grow from
+    bool resizing_ = false;
+    // Screen content fade-in (0 -> 1) restarted on each screen change.
+    float screenAlpha_ = 0.0f;
 
     Screen screen_ = Screen::Login;
     Screen appliedScreen_ = Screen::Dashboard;  // != screen_ so size applies frame 1

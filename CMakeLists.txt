@@ -93,6 +93,12 @@ endif()
 if(WIN32)
   # Registry (HWID) + sockets used transitively by curl.
   target_link_libraries(purple_loader PRIVATE advapi32 ws2_32)
+  # Build as a GUI-subsystem app so no console window pops up when the .exe is
+  # opened. Keep the standard int main() entry point (not WinMain).
+  set_target_properties(purple_loader PROPERTIES WIN32_EXECUTABLE TRUE)
+  if(MSVC)
+    target_link_options(purple_loader PRIVATE /ENTRY:mainCRTStartup)
+  endif()
 endif()
 
 # ---- Test launcher -----------------------------------------------------------
