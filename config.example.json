@@ -1,0 +1,23 @@
+{
+  "app": {
+    "title": "PURPLE // LOADER",
+    "subtitle": "secure authentication",
+    "demo_mode": true
+  },
+  "keyauth": {
+    "name": "",
+    "ownerid": "",
+    "version": "1.0",
+    "url": "https://keyauth.win/api/1.3/"
+  },
+  "supabase": {
+    "url": "",
+    "anon_key": "",
+    "login_events_table": "login_events",
+    "status_table": "app_status"
+  },
+  "launcher": {
+    "command": "",
+    "label": "RUN LAUNCHER"
+  }
+}
