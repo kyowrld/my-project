@@ -1,0 +1,10 @@
+build/
+out/
+*.o
+*.obj
+*.exe
+imgui.ini
+compile_commands.json
+
+# Local config may contain secrets (KeyAuth ownerid, Supabase keys)
+config.json
