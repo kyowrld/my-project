@@ -31,11 +31,11 @@ void apply() {
     colors[ImGuiCol_PopupBg] = color::kPanelRaised;
     colors[ImGuiCol_Text] = color::kText;
     colors[ImGuiCol_TextDisabled] = color::kTextDim;
-    colors[ImGuiCol_Border] = ImVec4(0.18f, 0.16f, 0.26f, 1.00f);
+    colors[ImGuiCol_Border] = color::kBorder;
 
-    colors[ImGuiCol_FrameBg] = color::kPanelRaised;
-    colors[ImGuiCol_FrameBgHovered] = ImVec4(0.145f, 0.129f, 0.208f, 1.00f);
-    colors[ImGuiCol_FrameBgActive] = ImVec4(0.176f, 0.153f, 0.259f, 1.00f);
+    colors[ImGuiCol_FrameBg] = color::kInputBg;
+    colors[ImGuiCol_FrameBgHovered] = ImVec4(0.106f, 0.121f, 0.157f, 1.00f);
+    colors[ImGuiCol_FrameBgActive] = ImVec4(0.129f, 0.145f, 0.188f, 1.00f);
 
     colors[ImGuiCol_Button] = color::kAccentDim;
     colors[ImGuiCol_ButtonHovered] = color::kAccent;
@@ -49,7 +49,7 @@ void apply() {
     colors[ImGuiCol_HeaderHovered] = color::kAccent;
     colors[ImGuiCol_HeaderActive] = color::kAccentBright;
 
-    colors[ImGuiCol_Separator] = ImVec4(0.18f, 0.16f, 0.26f, 1.00f);
+    colors[ImGuiCol_Separator] = color::kBorder;
     colors[ImGuiCol_SeparatorHovered] = color::kAccent;
     colors[ImGuiCol_SeparatorActive] = color::kAccentBright;
 

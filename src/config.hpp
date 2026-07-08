@@ -26,11 +26,11 @@ struct SupabaseConfig {
 
 struct LauncherConfig {
     std::string command;   // shell command / executable to run
-    std::string label = "RUN LAUNCHER";
+    std::string label = "Run Launcher";
 };
 
 struct AppConfig {
-    std::string title = "PURPLE // LOADER";
+    std::string title = "Packet.Online";
     std::string subtitle = "secure authentication";
     // When true (or when KeyAuth is not configured) any credentials are accepted
     // and the dashboard is populated with sample data so the UI can be previewed.

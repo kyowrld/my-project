@@ -12,11 +12,17 @@
 #include "keyauth.hpp"
 #include "supabase.hpp"
 
+struct GLFWwindow;
+
 // Owns all application state and renders the two screens (login + dashboard).
 class App {
 public:
     explicit App(AppConfig config);
     ~App();
+
+    // The borderless GLFW window we draw custom chrome for (traffic lights,
+    // dragging). Must be called before render().
+    void setWindow(GLFWwindow* window) { window_ = window; }
 
     // Renders the whole UI into a full-viewport window. Call once per frame.
     void render();
@@ -32,6 +38,7 @@ private:
         std::string username;
         std::string ip;
         std::string hwid;
+        std::string licenseKey;
         std::string plan = "-";
         std::string expiryUnix;
         std::string createdate;
@@ -44,6 +51,11 @@ private:
     void renderDashboard(const ImVec2& size);
     void renderConsole(float width, float height);
 
+    // Custom window chrome (borderless): rounded background, drag-to-move, and
+    // the red/orange/green traffic lights. Returns the content inset region.
+    void renderChrome(const ImVec2& size);
+    void handleWindowDrag(const ImVec2& size);
+
     void beginAuth();
     void runAuth(AuthMode mode, std::string field1, std::string field2, std::string code);
     void runLauncher();
@@ -53,6 +65,18 @@ private:
     AppConfig config_;
     keyauth::Client keyauth_;
     supabase::Client supabase_;
+    GLFWwindow* window_ = nullptr;
+
+    // Window-drag bookkeeping for the borderless title bar.
+    bool dragging_ = false;
+    double dragCursorX_ = 0.0;
+    double dragCursorY_ = 0.0;
+    int dragWindowX_ = 0;
+    int dragWindowY_ = 0;
+
+    // Fullscreen toggle (green light) restores to this windowed geometry.
+    bool fullscreen_ = false;
+    int savedX_ = 0, savedY_ = 0, savedW_ = 0, savedH_ = 0;
 
     Screen screen_ = Screen::Login;
     AuthMode authMode_ = AuthMode::Account;

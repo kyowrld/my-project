@@ -100,6 +100,10 @@ int main(int argc, char** argv) {
 #if defined(__APPLE__)
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
+    // Borderless + transparent so we can draw our own rounded chrome and
+    // macOS-style traffic lights (the corners show the desktop behind).
+    glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
+    glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE);
 
     GLFWwindow* window = glfwCreateWindow(1120, 720, config.title.c_str(), nullptr, nullptr);
     if (!window) {
@@ -123,6 +127,7 @@ int main(int argc, char** argv) {
     ImGui_ImplOpenGL3_Init(glslVersion);
 
     App app(config);
+    app.setWindow(window);
 
     while (!glfwWindowShouldClose(window) && !app.shouldQuit()) {
         glfwPollEvents();
@@ -138,8 +143,8 @@ int main(int argc, char** argv) {
         int fbH = 0;
         glfwGetFramebufferSize(window, &fbW, &fbH);
         glViewport(0, 0, fbW, fbH);
-        const ImVec4 bg = theme::color::kBackground;
-        glClearColor(bg.x, bg.y, bg.z, bg.w);
+        // Transparent clear so the rounded corners reveal the desktop.
+        glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
         glClear(GL_COLOR_BUFFER_BIT);
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
