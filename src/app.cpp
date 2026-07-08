@@ -353,9 +353,25 @@ void App::renderChrome(const ImVec2& size) {
     handleWindowDrag(size);
 }
 
+void App::applyWindowForScreen(Screen s) {
+    if (!window_ || fullscreen_) return;
+    const int w = s == Screen::Login ? 440 : 1080;
+    const int h = s == Screen::Login ? 496 : 680;
+    int wx = 0, wy = 0, ww = 0, wh = 0;
+    glfwGetWindowPos(window_, &wx, &wy);
+    glfwGetWindowSize(window_, &ww, &wh);
+    const int cx = wx + ww / 2, cy = wy + wh / 2;
+    glfwSetWindowSize(window_, w, h);
+    glfwSetWindowPos(window_, cx - w / 2, cy - h / 2);
+}
+
 void App::render() {
     if (authenticated_.exchange(false)) {
         screen_ = Screen::Dashboard;
+    }
+    if (appliedScreen_ != screen_) {
+        applyWindowForScreen(screen_);
+        appliedScreen_ = screen_;
     }
 
     const ImGuiViewport* viewport = ImGui::GetMainViewport();
@@ -387,33 +403,33 @@ void App::render() {
 
 void App::renderLogin(const ImVec2& size) {
     const bool license = authMode_ == AuthMode::License;
-    const float cardW = 380.0f;
-    const float cardH = 430.0f;
-    ImGui::SetCursorPos(ImVec2((size.x - cardW) * 0.5f, (size.y - cardH) * 0.5f));
+    // The whole (compact) window is the login box; traffic lights sit on it.
+    const float padX = 34.0f;
+    const float fieldW = size.x - padX * 2;
 
-    ImGui::PushStyleColor(ImGuiCol_ChildBg, theme::color::kPanel);
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(28, 26));
-    ImGui::BeginChild("##loginCard", ImVec2(cardW, cardH), true);
-
+    ImGui::SetCursorPos(ImVec2(padX, 56.0f));
     ui::pushFont(ui::fontHuge);
     ImGui::TextUnformatted("login");
     if (ui::fontHuge) ImGui::PopFont();
 
     ImGui::Dummy(ImVec2(0, 10));
 
-    const float fieldW = cardW - 56.0f;
     ImGui::PushItemWidth(fieldW);
+    auto field = [&](const char* label, const char* id, const char* hint, char* buf,
+                     size_t len, ImGuiInputTextFlags flags) {
+        ImGui::SetCursorPosX(padX);
+        caption(label);
+        ImGui::SetCursorPosX(padX);
+        ImGui::InputTextWithHint(id, hint, buf, len, flags);
+    };
     if (!license) {
-        caption("Username:");
-        ImGui::InputTextWithHint("##user", "username", username_, sizeof(username_));
+        field("Username:", "##user", "username", username_, sizeof(username_), 0);
         ImGui::Dummy(ImVec2(0, 4));
-        caption("Password:");
-        ImGui::InputTextWithHint("##pass", "password", password_, sizeof(password_),
-                                 ImGuiInputTextFlags_Password);
+        field("Password:", "##pass", "password", password_, sizeof(password_),
+              ImGuiInputTextFlags_Password);
     } else {
-        caption("License key:");
-        ImGui::InputTextWithHint("##key", "PACKET-XXXXX-XXXXX-XXXXX-XXXXX", licenseKey_,
-                                 sizeof(licenseKey_));
+        field("License key:", "##key", "PACKET-XXXXX-XXXXX-XXXXX-XXXXX", licenseKey_,
+              sizeof(licenseKey_), 0);
     }
     ImGui::PopItemWidth();
 
@@ -421,30 +437,33 @@ void App::renderLogin(const ImVec2& size) {
         std::lock_guard<std::mutex> lock(mutex_);
         if (!errorMessage_.empty()) {
             ImGui::Dummy(ImVec2(0, 2));
+            ImGui::SetCursorPosX(padX);
             ImGui::PushStyleColor(ImGuiCol_Text, theme::color::kError);
             ImGui::TextWrapped("%s", errorMessage_.c_str());
             ImGui::PopStyleColor();
         }
     }
 
-    ImGui::Dummy(ImVec2(0, 10));
+    ImGui::Dummy(ImVec2(0, 12));
 
     const bool busy = busy_;
     if (busy) ImGui::BeginDisabled();
     ui::pushFont(ui::fontMedium);
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 12.0f);
+    ImGui::SetCursorPosX(padX);
     if (ImGui::Button(busy ? "signing in..." : "sign in", ImVec2(fieldW, 46))) {
         beginAuth();
     }
+    ImGui::PopStyleVar();
     if (ui::fontMedium) ImGui::PopFont();
     if (busy) ImGui::EndDisabled();
 
-    ImGui::Dummy(ImVec2(0, 6));
+    ImGui::Dummy(ImVec2(0, 8));
 
     // Secondary auth-mode toggle.
-    ImGui::PushStyleColor(ImGuiCol_Text, theme::color::kAccentBright);
     const char* toggleText = license ? "use account instead" : "use a license key";
     const float tw = ImGui::CalcTextSize(toggleText).x;
-    ImGui::SetCursorPosX((cardW - tw) * 0.5f);
+    ImGui::SetCursorPosX((size.x - tw) * 0.5f);
     if (ImGui::InvisibleButton("##modetoggle", ImVec2(tw, ImGui::GetTextLineHeight()))) {
         authMode_ = license ? AuthMode::Account : AuthMode::License;
     }
@@ -453,18 +472,13 @@ void App::renderLogin(const ImVec2& size) {
         const ImVec2 mn = ImGui::GetItemRectMin();
         dl->AddText(mn, ImGui::GetColorU32(theme::color::kAccentBright), toggleText);
     }
-    ImGui::PopStyleColor();
 
-    // Footer brand pinned to the bottom of the card.
+    // Footer brand pinned to the bottom of the window.
     const char* brand = config_.title.c_str();
     const float bw = ImGui::CalcTextSize(brand).x;
-    ImGui::SetCursorPos(ImVec2((cardW - bw) * 0.5f, cardH - 40.0f));
+    ImGui::SetCursorPos(ImVec2((size.x - bw) * 0.5f, size.y - 38.0f));
     ImGui::PushStyleColor(ImGuiCol_Text, theme::color::kAccentBright);
     ImGui::TextUnformatted(brand);
-    ImGui::PopStyleColor();
-
-    ImGui::EndChild();
-    ImGui::PopStyleVar();
     ImGui::PopStyleColor();
 }
 

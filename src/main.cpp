@@ -105,7 +105,8 @@ int main(int argc, char** argv) {
     glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
     glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE);
 
-    GLFWwindow* window = glfwCreateWindow(1120, 720, config.title.c_str(), nullptr, nullptr);
+    // Starts on the compact login screen; App resizes per screen at runtime.
+    GLFWwindow* window = glfwCreateWindow(440, 496, config.title.c_str(), nullptr, nullptr);
     if (!window) {
         std::fprintf(stderr, "Failed to create window\n");
         glfwTerminate();

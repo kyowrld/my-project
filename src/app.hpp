@@ -51,6 +51,10 @@ private:
     void renderDashboard(const ImVec2& size);
     void renderConsole(float width, float height);
 
+    // Resizes the OS window to fit the active screen (compact login box vs.
+    // larger dashboard), keeping it centered on its current position.
+    void applyWindowForScreen(Screen s);
+
     // Custom window chrome (borderless): rounded background, drag-to-move, and
     // the red/orange/green traffic lights. Returns the content inset region.
     void renderChrome(const ImVec2& size);
@@ -79,6 +83,7 @@ private:
     int savedX_ = 0, savedY_ = 0, savedW_ = 0, savedH_ = 0;
 
     Screen screen_ = Screen::Login;
+    Screen appliedScreen_ = Screen::Dashboard;  // != screen_ so size applies frame 1
     AuthMode authMode_ = AuthMode::Account;
     bool quit_ = false;
 
